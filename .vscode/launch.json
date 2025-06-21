@@ -18,5 +18,45 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
+        {
+            "name": "Run: Main File with help",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "args": [
+                "--help",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run: Main File set recipes",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "args": [
+                "--input",
+                "${workspaceFolder}/data",
+                "--recipes",
+                "test-recipe-1",
+                "test-recipe-2",
+                "--verbose",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run: Main File set presets",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "args": [
+                "--input",
+                "${workspaceFolder}/data",
+                "--presets",
+                "test-preset-1",
+                "test-preset-2",
+                "--verbose",
+            ],
+            "console": "integratedTerminal"
+        },
     ]
 }
