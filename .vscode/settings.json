@@ -9,5 +9,10 @@
   "python.analysis.typeCheckingMode": "standard",
   "files.exclude": {
     "**/__pycache__": true,
-  }
+  },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/copilot/commit-message-generation.md"
+    }
+  ],
 }
