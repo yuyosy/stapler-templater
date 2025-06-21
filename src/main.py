@@ -7,6 +7,7 @@ from ruamel.yaml import YAML
 
 from args import set_parser
 from config import Config
+from processor.runner import run_processor
 from utilities.resolve_path import resolve_path
 
 
@@ -49,6 +50,13 @@ def main():
     if not input_path.exists():
         parser.error(f"The input path '{input_path}' does not exist.")
         parser.exit(1)
+
+    run_processor(
+        input_path=input_path,
+        config=config,
+        recipes=args.recipes,
+        presets=args.presets,
+    )
 
 
 if __name__ == "__main__":
