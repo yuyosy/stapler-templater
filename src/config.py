@@ -1,11 +1,10 @@
 from typing import List, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class InputOption(BaseModel):
     file_pattern: str
-    encoding: str = "utf-8"
 
 
 class OutputOption(BaseModel):
@@ -17,6 +16,59 @@ class OutputOption(BaseModel):
 class TemplateOption(BaseModel):
     folder: str
     file: str
+    encoding: str = "utf-8"
+
+
+class ReadContentExtractOption(BaseModel):
+    extract_type: Literal["auto", "index", "line", "exact", "regex"]
+    extract: str | int
+
+    @model_validator(mode="after")
+    def check_extract_type(self):
+        if self.extract_type in ["index", "line"] and not isinstance(self.extract, int):
+            raise ValueError(
+                f"For '{self.extract_type}' extract_type, 'extract' must be an integer."
+            )
+        elif self.extract_type in ["exact", "regex"] and not isinstance(
+            self.extract, str
+        ):
+            raise ValueError(
+                f"For '{self.extract_type}' extract_type, 'extract' must be a string."
+            )
+        return self
+
+
+class ReadContentOption(BaseModel):
+    start: ReadContentExtractOption | None = None
+    end: ReadContentExtractOption | None = None
+    encoding: str = "utf-8"
+
+
+class TextFSMOption(BaseModel):
+    parse_type: Literal["list", "dict"] = "dict"
+    enable_header: bool = True
+    template: str
+
+
+class ParseOption(BaseModel):
+    parse_type: Literal["plain", "json", "yaml", "xml", "textfsm"]
+    parse_result_name: str = "parse_result"
+    textfsm: TextFSMOption | None = None
+
+    @model_validator(mode="after")
+    def check_textfsm_required(self):
+        if self.parse_type == "textfsm" and self.textfsm is None:
+            raise ValueError("textfsm is required when parse_type is 'textfsm'")
+        return self
+
+
+class VariableOption(BaseModel):
+    target: Literal["filename", "filepath", "content"]
+    pattern: str
+
+
+class AdditionalParamOption(BaseModel):
+    value: str
 
 
 class RecipeOption(BaseModel):
@@ -26,6 +78,10 @@ class RecipeOption(BaseModel):
     input: InputOption
     output: OutputOption
     template: TemplateOption
+    read_content: ReadContentOption | None = None
+    parse: ParseOption | None = None
+    variables: dict[str, VariableOption] | None = None
+    additional_params: dict[str, str | AdditionalParamOption] | None = None
 
 
 class PresetRecipeOption(BaseModel):
