@@ -3,7 +3,7 @@
 data/
 output/
 *.local*
-
+!tests/data/
 
 # Python-generated files
 __pycache__/
