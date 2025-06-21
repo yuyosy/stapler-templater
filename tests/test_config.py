@@ -38,18 +38,29 @@ def test_template_option_defaults():
 
 
 def test_read_content_extract_option_valid():
-    ReadContentExtractOption(extract_type="index", extract=1)
-    ReadContentExtractOption(extract_type="line", extract=2)
-    ReadContentExtractOption(extract_type="exact", extract="foo")
-    ReadContentExtractOption(extract_type="regex", extract="bar")
-    ReadContentExtractOption(extract_type="auto", extract="baz")
+    ReadContentExtractOption(extract_type="index", target=1)
+    ReadContentExtractOption(extract_type="line", target=2)
+    ReadContentExtractOption(extract_type="exact", target="foo")
+    ReadContentExtractOption(extract_type="regex", target="bar")
+    ReadContentExtractOption(extract_type="auto", target="baz")
 
 
 def test_read_content_extract_option_invalid():
     with pytest.raises(ValidationError):
-        ReadContentExtractOption(extract_type="index", extract="notint")
+        ReadContentExtractOption(extract_type="index", target="notint")
     with pytest.raises(ValidationError):
-        ReadContentExtractOption(extract_type="exact", extract=123)
+        ReadContentExtractOption(extract_type="exact", target=123)
+
+
+def test_read_content_extract_option_include_match():
+    opt = ReadContentExtractOption(extract_type="exact", target="foo")
+    assert opt.include_match is True
+    opt2 = ReadContentExtractOption(
+        extract_type="regex", target="bar", include_match=True
+    )
+    assert opt2.include_match is True
+    opt3 = ReadContentExtractOption(extract_type="index", target=1, include_match=False)
+    assert opt3.include_match is False
 
 
 def test_textfsm_option_defaults():

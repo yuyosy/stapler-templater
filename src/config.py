@@ -21,16 +21,17 @@ class TemplateOption(BaseModel):
 
 class ReadContentExtractOption(BaseModel):
     extract_type: Literal["auto", "index", "line", "exact", "regex"]
-    extract: str | int
+    target: str | int
+    include_match: bool = True
 
     @model_validator(mode="after")
     def check_extract_type(self):
-        if self.extract_type in ["index", "line"] and not isinstance(self.extract, int):
+        if self.extract_type in ["index", "line"] and not isinstance(self.target, int):
             raise ValueError(
                 f"For '{self.extract_type}' extract_type, 'extract' must be an integer."
             )
         elif self.extract_type in ["exact", "regex"] and not isinstance(
-            self.extract, str
+            self.target, str
         ):
             raise ValueError(
                 f"For '{self.extract_type}' extract_type, 'extract' must be a string."
