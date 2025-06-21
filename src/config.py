@@ -44,21 +44,46 @@ class ReadContentOption(BaseModel):
     encoding: str = "utf-8"
 
 
+class JsonOption(BaseModel):
+    pass
+
+
+class YamlOption(BaseModel):
+    pass
+
+
+class XmlOption(BaseModel):
+    pass
+
+
+class DsvOption(BaseModel):
+    parse_type: Literal["list", "dict"] = "dict"
+    enable_header: bool = True
+    delimiter: str = "\t"
+    skip_empty_lines: bool = True
+    comment_line: str | None = None
+
+
 class TextFSMOption(BaseModel):
     parse_type: Literal["list", "dict"] = "dict"
     enable_header: bool = True
     template: str
+    encoding: str = "utf-8"
 
 
 class ParseOption(BaseModel):
-    parse_type: Literal["plain", "json", "yaml", "xml", "textfsm"]
+    parse_type: Literal["plain", "json", "yaml", "xml", "dsv", "textfsm"]
     parse_result_name: str = "parse_result"
-    textfsm: TextFSMOption | None = None
+    json_options: JsonOption | None = None
+    yaml_options: YamlOption | None = None
+    xml_options: XmlOption | None = None
+    dsv_options: DsvOption | None = None
+    textfsm_options: TextFSMOption | None = None
 
     @model_validator(mode="after")
     def check_textfsm_required(self):
-        if self.parse_type == "textfsm" and self.textfsm is None:
-            raise ValueError("textfsm is required when parse_type is 'textfsm'")
+        if self.parse_type == "textfsm" and self.textfsm_options is None:
+            raise ValueError("textfsm_options is required when parse_type is 'textfsm'")
         return self
 
 

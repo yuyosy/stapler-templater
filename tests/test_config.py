@@ -4,7 +4,9 @@ from pydantic import ValidationError
 from src.config import (
     AdditionalParamOption,
     Config,
+    DsvOption,
     InputOption,
+    JsonOption,
     OutputOption,
     ParseOption,
     PresetOption,
@@ -14,6 +16,8 @@ from src.config import (
     TemplateOption,
     TextFSMOption,
     VariableOption,
+    XmlOption,
+    YamlOption,
 )
 
 
@@ -59,7 +63,7 @@ def test_parse_option_textfsm_required():
     with pytest.raises(ValidationError):
         ParseOption(parse_type="textfsm")
     # valid
-    ParseOption(parse_type="textfsm", textfsm=TextFSMOption(template="foo"))
+    ParseOption(parse_type="textfsm", textfsm_options=TextFSMOption(template="foo"))
 
 
 def test_variable_option():
@@ -124,3 +128,38 @@ def test_config_methods():
     p1 = config.get_preset("p1")
     assert p1 is not None and p1.id == "p1"
     assert config.get_preset("notfound") is None
+
+
+def test_json_option():
+    j = JsonOption()
+    assert isinstance(j, JsonOption)
+
+
+def test_yaml_option():
+    y = YamlOption()
+    assert isinstance(y, YamlOption)
+
+
+def test_xml_option():
+    x = XmlOption()
+    assert isinstance(x, XmlOption)
+
+
+def test_dsv_option_defaults():
+    d = DsvOption()
+    assert d.parse_type == "dict"
+    assert d.enable_header is True
+    assert d.delimiter == "\t"
+    assert d.skip_empty_lines is True
+    assert d.comment_line is None
+
+
+def test_parse_option_all_types():
+    ParseOption(parse_type="plain")
+    ParseOption(parse_type="json", json_options=JsonOption())
+    ParseOption(parse_type="yaml", yaml_options=YamlOption())
+    ParseOption(parse_type="xml", xml_options=XmlOption())
+    ParseOption(parse_type="dsv", dsv_options=DsvOption())
+    ParseOption(parse_type="textfsm", textfsm_options=TextFSMOption(template="foo"))
+    with pytest.raises(ValidationError):
+        ParseOption(parse_type="textfsm")
