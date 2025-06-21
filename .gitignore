@@ -1,0 +1,22 @@
+# user-specific
+
+data/
+output/
+*.local*
+
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Environments
+.venv
+.env
+.venv
+
+## ruff
+.ruff_cache/
