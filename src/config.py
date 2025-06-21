@@ -91,6 +91,7 @@ class ParseOption(BaseModel):
 class VariableOption(BaseModel):
     target: Literal["filename", "filepath", "content"]
     pattern: str
+    match_index: int = 0
 
 
 class AdditionalParamOption(BaseModel):

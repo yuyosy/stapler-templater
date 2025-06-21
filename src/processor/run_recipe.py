@@ -11,6 +11,7 @@ from processor.parser.textfsm_parser import parse_textfsm
 from processor.parser.xml_parser import parse_xml
 from processor.parser.yaml_parser import parse_yaml
 from processor.read_content import read_content
+from processor.recipe_variables import resolve_recipe_variables
 from processor.templater import setup_template_environment
 from utilities.resolve_path import resolve_path
 
@@ -18,10 +19,11 @@ from utilities.resolve_path import resolve_path
 class RecipeParams(BaseModel):
     content: str = ""
     parse_result: Any = None
+    variables: dict[str, Any] = {}
     result_name: str = "parse_result"
 
     def to_dict(self):
-        d = {"content": self.content}
+        d = {"content": self.content, "variables": self.variables}
         if self.parse_result is not None:
             d[self.result_name] = self.parse_result
         return d
@@ -67,6 +69,8 @@ def run_recipe(
             params.parse_result = result
             if recipe.parse.parse_result_name:
                 params.result_name = recipe.parse.parse_result_name
+
+        params.variables = resolve_recipe_variables(file, params.content, recipe)
         renderer = template_env.get_template(recipe.template.file)
         rendered = renderer.render(params.to_dict())
         write_output(rendered, recipe.output, params)
@@ -84,7 +88,7 @@ def iter_files(input_path: Path, option: InputOption) -> Iterator[Path]:
 
 
 def write_output(rendered: str, option: OutputOption, params: RecipeParams):
-    output_path = resolve_path(replace_placeholders(option.path))
+    output_path = resolve_path(replace_placeholders(option.path, params.variables))
     if not output_path.parent.exists():
         output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open(option.write_mode, encoding=option.encoding) as f:
@@ -92,5 +96,7 @@ def write_output(rendered: str, option: OutputOption, params: RecipeParams):
     logger.info(f"Output written to [{option.write_mode}] {output_path}")
 
 
-def replace_placeholders(template: str) -> str:
+def replace_placeholders(template: str, variables: dict[str, Any]) -> str:
+    for key, value in variables.items():
+        template = template.replace("${" + key + "}", str(value))
     return template
