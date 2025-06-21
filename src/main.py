@@ -38,9 +38,14 @@ def main():
     logger.debug(f"Recipes: {args.recipes if args.recipes else 'None'}")
     logger.debug(f"Presets: {args.presets if args.presets else 'None'}")
 
-    if not args.recipes and not args.presets:
-        parser.error("At least one of --recipes or --presets must be provided.")
-        parser.exit(1)
+    if args.recipes or args.presets:
+        recipes = args.recipes
+        presets = args.presets
+    else:
+        recipes_str = input("Enter recipes to run (comma-separated)>> ")
+        recipes = [recipe.strip() for recipe in recipes_str.split(",")]
+        presets_str = input("Enter presets to run (comma-separated)>> ")
+        presets = [preset.strip() for preset in presets_str.split(",")]
 
     if args.input:
         input_path = resolve_path(args.input)
@@ -54,10 +59,13 @@ def main():
     run_processor(
         input_path=input_path,
         config=config,
-        recipes=args.recipes,
-        presets=args.presets,
+        recipes=recipes,
+        presets=presets,
     )
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt received, exiting...")
