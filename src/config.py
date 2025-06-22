@@ -90,15 +90,6 @@ class ParseOption(BaseModel):
 
 
 class PresetVariableOption(BaseModel):
-    name: Literal[
-        "fileName",
-        "fileExt",
-        "filePath",
-        "parentName",
-        "parentPath",
-        "templateName",
-        "templateFolder",
-    ]
     path_separator: Literal["local", "posix"] = "posix"
 
 
@@ -110,7 +101,21 @@ class VariableOption(BaseModel):
 
 
 class VariablesOption(BaseModel):
-    presets_overwrite: dict[str, PresetVariableOption] | None = None
+    presets_overwrite: (
+        dict[
+            Literal[
+                "fileName",
+                "fileExt",
+                "filePath",
+                "parentName",
+                "parentPath",
+                "templateName",
+                "templateFolder",
+            ],
+            PresetVariableOption,
+        ]
+        | None
+    ) = None
     defined: dict[str, VariableOption] | None = None
 
 
