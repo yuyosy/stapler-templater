@@ -11,11 +11,13 @@ from src.config import (
     ParseOption,
     PresetOption,
     PresetRecipeOption,
+    PresetVariableOption,
     ReadContentExtractOption,
     RecipeOption,
     TemplateOption,
     TextFSMOption,
     VariableOption,
+    VariablesOption,
     XmlOption,
     YamlOption,
 )
@@ -174,3 +176,23 @@ def test_parse_option_all_types():
     ParseOption(parse_type="textfsm", textfsm_options=TextFSMOption(template="foo"))
     with pytest.raises(ValidationError):
         ParseOption(parse_type="textfsm")
+
+
+def test_variables_option_defined():
+    v = VariablesOption(
+        defined={"foo": VariableOption(target="filename", pattern="abc")}
+    )
+    assert isinstance(v.defined, dict)
+    assert "foo" in v.defined
+    assert v.defined["foo"].pattern == "abc"
+
+
+def test_variables_option_presets_overwrite():
+    v = VariablesOption(
+        presets_overwrite={
+            "fileName": PresetVariableOption(name="fileName", path_separator="local")
+        }
+    )
+    assert isinstance(v.presets_overwrite, dict)
+    assert "fileName" in v.presets_overwrite
+    assert v.presets_overwrite["fileName"].path_separator == "local"

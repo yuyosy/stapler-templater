@@ -88,10 +88,29 @@ class ParseOption(BaseModel):
         return self
 
 
+class PresetVariableOption(BaseModel):
+    name: Literal[
+        "fileName",
+        "fileExt",
+        "filePath",
+        "parentName",
+        "parentPath",
+        "templateName",
+        "templateFolder",
+    ]
+    path_separator: Literal["local", "posix"] = "posix"
+
+
 class VariableOption(BaseModel):
     target: Literal["filename", "filepath", "content"]
+    path_separator: Literal["local", "posix"] = "posix"
     pattern: str
-    match_index: int = 0
+    match_index: int | str = 0
+
+
+class VariablesOption(BaseModel):
+    presets_overwrite: dict[str, PresetVariableOption] | None = None
+    defined: dict[str, VariableOption] | None = None
 
 
 class AdditionalParamOption(BaseModel):
@@ -107,7 +126,7 @@ class RecipeOption(BaseModel):
     template: TemplateOption
     read_content: ReadContentOption | None = None
     parse: ParseOption | None = None
-    variables: dict[str, VariableOption] | None = None
+    variables: VariablesOption | None = None
     additional_params: dict[str, str | AdditionalParamOption] | None = None
 
 
