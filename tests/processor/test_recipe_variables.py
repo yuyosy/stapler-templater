@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from src.config import (
     InputOption,
     OutputOption,
@@ -29,78 +31,76 @@ def make_recipe(template_file, template_folder, variables=None):
     )
 
 
-def test_resolve_recipe_variables_filename():
-    file = Path("/tmp/sample_123.txt")
-    content = "abc content"
-    variables = VariablesOption(
-        defined={"num": VariableOption(target="filename", pattern=r"\d+")}
-    )
+@pytest.mark.parametrize(
+    "file,content,variables,expected",
+    [
+        (
+            Path("/tmp/sample_123.txt"),
+            "abc content",
+            VariablesOption(
+                defined={"num": VariableOption(target="filename", pattern=r"\d+")}
+            ),
+            {"num": "123"},
+        ),
+        (
+            Path("/tmp/123/parent/abc_789.txt"),
+            "xyz content",
+            VariablesOption(
+                defined={
+                    "val": VariableOption(target="filepath", pattern=r"\d+.*\.txt")
+                }
+            ),
+            {"val": "123/parent/abc_789.txt"},
+        ),
+        (
+            Path("/tmp/irrelevant.txt"),
+            "abc=xyz; id=456;",
+            VariablesOption(
+                defined={"id": VariableOption(target="content", pattern=r"id=\d+")}
+            ),
+            {"id": "id=456"},
+        ),
+        (
+            Path("/tmp/abc.txt"),
+            "no match here",
+            VariablesOption(
+                defined={
+                    "notfound": VariableOption(target="content", pattern=r"zzz=(\d+)")
+                }
+            ),
+            {"notfound": ""},
+        ),
+        (
+            Path("/tmp/abc.txt"),
+            "abc=123; xyz=456;",
+            VariablesOption(
+                defined={
+                    "both": VariableOption(
+                        target="content", pattern=r"(abc)=(123)", match_index=2
+                    )
+                }
+            ),
+            {"both": "123"},
+        ),
+        (
+            Path("/tmp/abc.txt"),
+            "abc=123; xyz=456;",
+            VariablesOption(
+                defined={
+                    "named": VariableOption(
+                        target="content", pattern=r"abc=(?P<id>\d+)", match_index="id"
+                    )
+                }
+            ),
+            {"named": "123"},
+        ),
+    ],
+)
+def test_resolve_recipe_variables_param(file, content, variables, expected):
     recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
     result = resolve_recipe_variables(file, content, recipe)
-    assert result["num"] == "123"
-
-
-def test_resolve_recipe_variables_filepath():
-    file = Path("/tmp/123/parent/abc_789.txt")
-    content = "xyz content"
-    variables = VariablesOption(
-        defined={"val": VariableOption(target="filepath", pattern=r"\d+.*\.txt")}
-    )
-    recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
-    result = resolve_recipe_variables(file, content, recipe)
-    assert result["val"] == "123/parent/abc_789.txt"
-
-
-def test_resolve_recipe_variables_content():
-    file = Path("/tmp/irrelevant.txt")
-    content = "abc=xyz; id=456;"
-    variables = VariablesOption(
-        defined={"id": VariableOption(target="content", pattern=r"id=\d+")}
-    )
-    recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
-    result = resolve_recipe_variables(file, content, recipe)
-    assert result["id"] == "id=456"
-
-
-def test_resolve_recipe_variables_no_match():
-    file = Path("/tmp/abc.txt")
-    content = "no match here"
-    variables = VariablesOption(
-        defined={"notfound": VariableOption(target="content", pattern=r"zzz=(\d+)")}
-    )
-    recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
-    result = resolve_recipe_variables(file, content, recipe)
-    assert result["notfound"] == ""
-
-
-def test_resolve_recipe_variables_match_index():
-    file = Path("/tmp/abc.txt")
-    content = "abc=123; xyz=456;"
-    variables = VariablesOption(
-        defined={
-            "both": VariableOption(
-                target="content", pattern=r"(abc)=(123)", match_index=2
-            )
-        }
-    )
-    recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
-    result = resolve_recipe_variables(file, content, recipe)
-    assert result["both"] == "123"
-
-
-def test_resolve_recipe_variables_match_index_named_group():
-    file = Path("/tmp/abc.txt")
-    content = "abc=123; xyz=456;"
-    variables = VariablesOption(
-        defined={
-            "named": VariableOption(
-                target="content", pattern=r"abc=(?P<id>\d+)", match_index="id"
-            )
-        }
-    )
-    recipe = make_recipe("tmpl.txt", "tmpl_dir", variables)
-    result = resolve_recipe_variables(file, content, recipe)
-    assert result["named"] == "123"
+    for k, v in expected.items():
+        assert result[k] == v
 
 
 def test_resolve_recipe_variables_no_variables():
