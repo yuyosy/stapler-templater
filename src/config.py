@@ -54,7 +54,8 @@ class YamlOption(BaseModel):
 
 
 class XmlOption(BaseModel):
-    pass
+    attribute_key: str = "@{key}"
+    text_key: str = "#text"
 
 
 class DsvOption(BaseModel):
