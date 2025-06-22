@@ -79,7 +79,6 @@ presets: # プリセット設定
     - parentPath: 親フォルダパス
     - templateName: テンプレート名
     - templateFolder: テンプレートフォルダ
-    - path_separator: パス区切り文字 (local|posix)
 
 
 ## License
