@@ -1,6 +1,0 @@
-line1: foo
-line2: bar
-line3: baz
-line4: 123
-line5: barfoo
-line6: end

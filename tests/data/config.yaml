@@ -1,0 +1,50 @@
+version: '1.0'
+name: test-config
+recipes:
+- enabled: true
+  id: r1
+  name: test-recipe
+  input:
+    file_pattern: input.txt
+  output:
+    path: output.txt
+    encoding: utf-8
+    write_mode: w
+  template:
+    folder: templates
+    file: test.j2
+    encoding: utf-8
+  read_content:
+  parse:
+  variables:
+  additional_params:
+- enabled: true
+  id: r2
+  name: fsm-recipe
+  input:
+    file_pattern: fsm_input.txt
+  output:
+    path: fsm_output.txt
+    encoding: utf-8
+    write_mode: w
+  template:
+    folder: templates
+    file: fsm.j2
+    encoding: utf-8
+  read_content:
+  parse:
+    parse_type: textfsm
+    textfsm_options:
+      parse_type: dict
+      template: textfsm/fsm_template.textfsm
+  variables:
+  additional_params:
+presets:
+- enabled: true
+  id: p1
+  name: test-preset
+  recipes:
+  - recipe: r1
+    enabled: true
+  - recipe: r2
+    enabled: true

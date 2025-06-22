@@ -16,8 +16,12 @@
     }
   ],
   "python.testing.pytestArgs": [
-    "tests"
+    "tests",
+    "--capture=no"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
+  "[plaintext]": {
+    "files.insertFinalNewline": false
+  }
 }

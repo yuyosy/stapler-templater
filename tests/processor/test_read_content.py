@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -5,7 +6,10 @@ import pytest
 from src.config import ReadContentExtractOption, ReadContentOption
 from src.processor.read_content import read_content
 
-testfile = Path.cwd().joinpath("tests", "data", "testfile.txt")
+# テストデータ
+TEST_CONTENT = (
+    "line1: foo\nline2: bar\nline3: baz\nline4: 123\nline5: barfoo\nline6: end\n"
+)
 
 
 @pytest.mark.parametrize(
@@ -110,5 +114,12 @@ testfile = Path.cwd().joinpath("tests", "data", "testfile.txt")
     ],
 )
 def test_read_content(option, expected):
-    result = read_content(testfile, option)
-    assert result == expected
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False, encoding="utf-8") as tf:
+        tf.write(TEST_CONTENT)
+        tf.flush()
+        tf_path = Path(tf.name)
+    try:
+        result = read_content(tf_path, option)
+        assert result == expected
+    finally:
+        tf_path.unlink(missing_ok=True)

@@ -1,0 +1,5 @@
+Result:
+---
+FSM_INPUT_TXT_CONTENT
+123456
+---

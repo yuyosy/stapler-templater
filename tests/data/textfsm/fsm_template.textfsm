@@ -1,0 +1,6 @@
+# TextFSM Template
+Value Required test1 (\S+)
+Value Required test2 (\d+)
+
+Start
+  ^${test1} ${test2}

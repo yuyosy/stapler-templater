@@ -1,4 +1,5 @@
-import os
+import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -105,24 +106,46 @@ def test_parse_dsv_all(content, options, expected):
     assert parse_dsv(content, options) == expected
 
 
+# TextFSMテンプレート内容
+TESTFSM_TEMPLATE = """# TextFSM Template
+Value Required Test1 (\\S+)
+
+Start
+  ^${Test1}
+
+"""
+
+
 # TextFSM
 @pytest.mark.parametrize(
-    "content, tpl, parse_type, enable_header, expected",
+    "content, tpl_content, parse_type, enable_header, expected",
     [
-        ("abc 123", "test.textfsm", "dict", True, [{"Test1": "abc"}]),
-        ("abc 123", "test.textfsm", "list", False, [["abc"]]),
-        ("abc 123", "test.textfsm", "dict", True, [{"Test1": "abc"}]),
-        ("abc 123", "test.textfsm", "list", True, [["Test1"], ["abc"]]),
-        ("abc 123", "test.textfsm", "list", False, [["abc"]]),
-        ("abc 123", "notfound.textfsm", "dict", True, None),
-        ("", "test.textfsm", "dict", True, []),
+        ("abc 123", TESTFSM_TEMPLATE, "dict", True, [{"Test1": "abc"}]),
+        ("abc 123", TESTFSM_TEMPLATE, "list", False, [["abc"]]),
+        ("abc 123", TESTFSM_TEMPLATE, "dict", True, [{"Test1": "abc"}]),
+        ("abc 123", TESTFSM_TEMPLATE, "list", True, [["Test1"], ["abc"]]),
+        ("abc 123", TESTFSM_TEMPLATE, "list", False, [["abc"]]),
+        ("abc 123", None, "dict", True, None),  # テンプレートなし
+        ("", TESTFSM_TEMPLATE, "dict", True, []),
     ],
 )
-def test_parse_textfsm_all(content, tpl, parse_type, enable_header, expected):
-    tpl_path = os.path.join("tests", "data", tpl)
+def test_parse_textfsm_all(content, tpl_content, parse_type, enable_header, expected):
+    if tpl_content is not None:
+        with tempfile.NamedTemporaryFile(
+            mode="w+", delete=False, encoding="utf-8", suffix=".textfsm"
+        ) as tf:
+            tf.write(tpl_content)
+            tf.flush()
+            tpl_path = tf.name
+    else:
+        tpl_path = "notfound.textfsm"
     options = TextFSMOption(
         template=tpl_path,
         parse_type=parse_type,
         enable_header=enable_header,
     )
-    assert parse_textfsm(content, options) == expected
+    try:
+        assert parse_textfsm(content, options) == expected
+    finally:
+        if tpl_content is not None:
+            Path(tpl_path).unlink(missing_ok=True)
