@@ -46,34 +46,47 @@ def run_recipe(
             logger.error(f"No valid files found in input path: {input_path}")
             continue
         logger.info(f"Processing file: {file}")
-        params = RecipeParams()
-        params.content = read_content(file, recipe.read_content)
-
-        if recipe.parse:
-            match recipe.parse.parse_type:
-                case "plain":
-                    result = params.content
-                case "json":
-                    result = parse_json(params.content, recipe.parse.json_options)
-                case "yaml":
-                    result = parse_yaml(params.content, recipe.parse.yaml_options)
-                case "xml":
-                    result = parse_xml(params.content, recipe.parse.xml_options)
-                case "dsv":
-                    result = parse_dsv(params.content, recipe.parse.dsv_options)
-                case "textfsm":
-                    result = parse_textfsm(params.content, recipe.parse.textfsm_options)
-                case _:
-                    logger.error(f"Unsupported parse type: {recipe.parse.parse_type}")
-                    result = {}
-            params.parse_result = result
-            if recipe.parse.parse_result_name:
-                params.result_name = recipe.parse.parse_result_name
-
+        params = create_recipe_params(file, recipe)
         params.variables = resolve_recipe_variables(file, params.content, recipe)
-        renderer = template_env.get_template(recipe.template.file)
-        rendered = renderer.render(params.to_dict())
+        rendered = render_template(template_env, recipe.template.file, params)
         write_output(rendered, recipe.output, params)
+
+
+def create_recipe_params(file: Path, recipe: RecipeOption) -> RecipeParams:
+    params = RecipeParams()
+    params.content = read_content(file, recipe.read_content)
+    if recipe.parse:
+        params.parse_result, params.result_name = parse_content(
+            params.content, recipe.parse
+        )
+    return params
+
+
+def parse_content(content: str, parse_option) -> tuple[Any, str]:
+    parse_type = parse_option.parse_type
+    result_name = parse_option.parse_result_name or "parse_result"
+    match parse_type:
+        case "plain":
+            result = content
+        case "json":
+            result = parse_json(content, parse_option.json_options)
+        case "yaml":
+            result = parse_yaml(content, parse_option.yaml_options)
+        case "xml":
+            result = parse_xml(content, parse_option.xml_options)
+        case "dsv":
+            result = parse_dsv(content, parse_option.dsv_options)
+        case "textfsm":
+            result = parse_textfsm(content, parse_option.textfsm_options)
+        case _:
+            logger.error(f"Unsupported parse type: {parse_type}")
+            result = {}
+    return result, result_name
+
+
+def render_template(template_env, template_file: str, params: RecipeParams) -> str:
+    renderer = template_env.get_template(template_file)
+    return renderer.render(params.to_dict())
 
 
 def iter_files(input_path: Path, option: InputOption) -> Iterator[Path]:

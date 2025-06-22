@@ -25,9 +25,12 @@ def parse_dsv(content: str, options: DsvOption | None) -> Any:
         return [] if parse_type == "list" else []
 
     if parse_type == "dict":
-        header = rows[0]
-        data_rows = rows[1:]
-        return [dict(zip(header, row)) for row in data_rows]
+        if enable_header:
+            header = rows[0]
+            data_rows = rows[1:]
+            return [dict(zip(header, row)) for row in data_rows]
+        else:
+            return [{i: v for i, v in enumerate(row)} for row in rows]
     else:
         if enable_header:
             return rows[1:]

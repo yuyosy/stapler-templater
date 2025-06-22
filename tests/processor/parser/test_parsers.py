@@ -16,9 +16,12 @@ from src.processor.parser.yaml_parser import parse_yaml
     [
         ('{"a": 1, "b": 2}', {"a": 1, "b": 2}),
         ("[1,2,3]", [1, 2, 3]),
+        ("{a: 1, b: 2}", None),
+        ("[1,2,3", None),
+        ("notjson", None),
     ],
 )
-def test_parse_json(content, expected):
+def test_parse_json_all(content, expected):
     assert parse_json(content, None) == expected
 
 
@@ -28,23 +31,37 @@ def test_parse_json(content, expected):
     [
         ("a: 1\nb: 2", {"a": 1, "b": 2}),
         ("- 1\n- 2\n- 3", [1, 2, 3]),
+        ("a: 1\nb: [", None),
+        ("- 1\n- 2\n- [", None),
+        ("not: yaml: -", None),
     ],
 )
-def test_parse_yaml(content, expected):
+def test_parse_yaml_all(content, expected):
     assert parse_yaml(content, None) == expected
 
 
 # XML
 @pytest.mark.parametrize(
-    "content,expected_tag",
+    "content,expected_dict",
     [
-        ("<root><a>1</a></root>", "root"),
-        ("<data></data>", "data"),
+        ("<root><a>1</a></root>", {"root": {"a": {"#text": "1"}}}),
+        ("<data></data>", {"data": None}),
+        (
+            "<root attr='val'><a>1</a></root>",
+            {"root": {"@attr": "val", "a": {"#text": "1"}}},
+        ),
+        (
+            "<root><a attr='x'>1</a></root>",
+            {"root": {"a": {"@attr": "x", "#text": "1"}}},
+        ),
+        ("<root><a>1</a>", None),  # Invalid XML (unclosed tag)
+        ("<root><a>1</a></b></root>", None),  # Invalid XML (mismatched tags)
+        ("plain text", None),  # Invalid XML (not well-formed)
     ],
 )
-def test_parse_xml(content, expected_tag):
+def test_parse_xml_all(content, expected_dict):
     elem = parse_xml(content, None)
-    assert elem.tag == expected_tag  # type: ignore
+    assert elem == expected_dict
 
 
 # DSV
@@ -66,12 +83,29 @@ def test_parse_xml(content, expected_tag):
             DsvOption(parse_type="list", delimiter=",", enable_header=False),
             [["a", "b"], ["c", "d"]],
         ),
+        (
+            "a\tb\n# comment\nc\td\n\n",
+            DsvOption(parse_type="dict", enable_header=True, comment_line="#"),
+            [{"a": "c", "b": "d"}],
+        ),
+        (
+            "a|b\nc|d",
+            DsvOption(parse_type="list", delimiter="|", enable_header=True),
+            [["c", "d"]],
+        ),
+        (
+            "a,b\nc",
+            DsvOption(parse_type="list", delimiter=",", enable_header=True),
+            [["c"]],
+        ),
+        ("", DsvOption(parse_type="dict", enable_header=True), []),
     ],
 )
-def test_parse_dsv(content, options, expected):
+def test_parse_dsv_all(content, options, expected):
     assert parse_dsv(content, options) == expected
 
 
+# TextFSM
 @pytest.mark.parametrize(
     "content, tpl, parse_type, enable_header, expected",
     [
@@ -80,14 +114,15 @@ def test_parse_dsv(content, options, expected):
         ("abc 123", "test.textfsm", "dict", True, [{"Test1": "abc"}]),
         ("abc 123", "test.textfsm", "list", True, [["Test1"], ["abc"]]),
         ("abc 123", "test.textfsm", "list", False, [["abc"]]),
+        ("abc 123", "notfound.textfsm", "dict", True, None),
+        ("", "test.textfsm", "dict", True, []),
     ],
 )
-def test_parse_textfsm(content, tpl, parse_type, enable_header, expected):
+def test_parse_textfsm_all(content, tpl, parse_type, enable_header, expected):
     tpl_path = os.path.join("tests", "data", tpl)
     options = TextFSMOption(
         template=tpl_path,
         parse_type=parse_type,
         enable_header=enable_header,
     )
-    result = parse_textfsm(content, options)
-    assert result == expected
+    assert parse_textfsm(content, options) == expected
