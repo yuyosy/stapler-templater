@@ -46,10 +46,15 @@ def run_recipe(
             logger.error(f"No valid files found in input path: {input_path}")
             continue
         logger.info(f"Processing file: {file}")
-        params = create_recipe_params(file, recipe)
-        params.variables = resolve_recipe_variables(file, params.content, recipe)
-        rendered = render_template(template_env, recipe.template.file, params)
-        write_output(rendered, recipe.output, params)
+        try:
+            params = create_recipe_params(file, recipe)
+            params.variables = resolve_recipe_variables(file, params.content, recipe)
+            rendered = render_template(template_env, recipe.template.file, params)
+            write_output(rendered, recipe.output, params)
+        except Exception as e:
+            logger.error(f"Error processing file {file}: {e}")
+            continue
+    logger.info(f"Recipe {recipe.id} completed successfully.")
 
 
 def create_recipe_params(file: Path, recipe: RecipeOption) -> RecipeParams:
@@ -59,6 +64,8 @@ def create_recipe_params(file: Path, recipe: RecipeOption) -> RecipeParams:
         params.parse_result, params.result_name = parse_content(
             params.content, recipe.parse
         )
+    else:
+        params.parse_result = params.content
     return params
 
 
@@ -85,18 +92,21 @@ def parse_content(content: str, parse_option) -> tuple[Any, str]:
 
 
 def render_template(template_env, template_file: str, params: RecipeParams) -> str:
+    logger.debug(f"Rendering template: {template_file} with params: {params}")
     renderer = template_env.get_template(template_file)
     return renderer.render(params.to_dict())
 
 
 def iter_files(input_path: Path, option: InputOption) -> Iterator[Path]:
     if input_path.is_file():
-        yield resolve_path(input_path)
+        yield input_path
+        return
     elif input_path.is_dir():
         for file in input_path.glob(option.file_pattern):
             if not file.is_file():
                 continue
-            yield resolve_path(file)
+            yield file
+        return
     logger.error(f"Invalid input path: {input_path}")
 
 
